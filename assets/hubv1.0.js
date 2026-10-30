@@ -192,10 +192,7 @@ document.addEventListener('click',function(e){
   else if(a==='leave'){stopAll();openSetup(cur.id)}
   else if(a==='undo'){if(ctrl){ctrl.undo();hideCoach();hintStep=0;sound('select')}}
   else if(a==='hint'){hint()}
-  else if(a==='restart'){
-    if(b.dataset.armed==='1'){b.dataset.armed='';clearTimeout(b._t);b.innerHTML='<span>⟳</span>重开';startPlay();toast('新的一局开始了')}
-    else{b.dataset.armed='1';b.innerHTML='<span>⟳</span>再点确认';sound('select');b._t=setTimeout(function(){b.dataset.armed='';b.innerHTML='<span>⟳</span>重开'},2500)}
-  }
+  else if(a==='restart'){sound('select');startPlay();toast('新的一局开始了')}
   else if(a==='rules'){startDemo(false,true)}
 });
 $('.go').onclick=function(){sound('select'); if($('.want-demo').checked) startDemo(true); else startPlay()};
