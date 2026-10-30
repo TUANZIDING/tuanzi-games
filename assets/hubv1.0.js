@@ -1,0 +1,201 @@
+(function(){
+'use strict';
+var G = window.TZGAMES || {};
+var ORDER = ['xiangqi','chess','gomoku','junqi'];
+var $ = function(s,r){return (r||document).querySelector(s)};
+var app = $('.app');
+
+var META = {
+  xiangqi:{bg:'linear-gradient(135deg,#ffe3c2,#ffd09a)',color:'#e5484d',tag:'楚河汉界，将帅对决',
+    svg:'<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#f6dba5" stroke="#b0793a" stroke-width="6"/><circle cx="50" cy="50" r="33" fill="none" stroke="#e5484d" stroke-width="2.5"/><text x="50" y="64" text-anchor="middle" font-size="40" font-family="Songti SC,STSong,serif" font-weight="700" fill="#e5484d">帅</text></svg>',
+    ask:['对方上一步，想用哪个子攻击你？','你的车和马，哪一个还没出动？','如果你走了这步，对方最想吃你哪个子？','你的帅周围，有没有对方的车或炮能直接照到？','有没有一步棋，既能防守又能顺便进攻？']},
+  chess:{bg:'linear-gradient(135deg,#dff0ff,#c4e1ff)',color:'#3b82f6',tag:'王车易位，兵到底升变',
+    svg:'<svg viewBox="0 0 100 100"><text x="50" y="80" text-anchor="middle" font-size="84" fill="#2b2340">♞</text></svg>',
+    ask:['对方刚走的子，现在攻击了你的哪些子？','你有没有没被保护、能被白吃的子？','中心四格，现在是谁控制得更多？','你的王安全吗？易位了没有？','有没有一步棋能同时攻击对方两个目标（双捉）？']},
+  gomoku:{bg:'linear-gradient(135deg,#e3f7ea,#c9eed6)',color:'#22a06b',tag:'连成五子，先到先赢',
+    svg:'<svg viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="10" fill="#f3d39b" stroke="#c39a5a" stroke-width="3"/><g stroke="#a47a3c" stroke-width="2"><path d="M28 8v84M50 8v84M72 8v84M8 28h84M8 50h84M8 72h84"/></g><circle cx="28" cy="28" r="9" fill="#2b2340"/><circle cx="50" cy="50" r="9" fill="#2b2340"/><circle cx="72" cy="72" r="9" fill="#fff" stroke="#999"/><circle cx="72" cy="28" r="9" fill="#fff" stroke="#999"/></svg>',
+    ask:['对方有没有已经连成三个、两头都空的「活三」？','你自己哪里离连五最近？','如果你不堵，对方下一步能不能形成两个威胁？','有没有一个点，能同时连出你的两条线？']},
+  junqi:{bg:'linear-gradient(135deg,#ece4ff,#d9ccff)',color:'#8b5cf6',tag:'暗棋布阵，夺旗为王',
+    svg:'<svg viewBox="0 0 100 100"><rect x="14" y="26" width="72" height="48" rx="10" fill="#e5484d" stroke="#a52a2e" stroke-width="4"/><text x="50" y="60" text-anchor="middle" font-size="26" font-weight="800" fill="#fff" font-family="PingFang SC,sans-serif">司令</text><path d="M70 10v26" stroke="#2b2340" stroke-width="4"/><path d="M70 10h20l-6 7 6 7H70z" fill="#ffc53d"/></svg>',
+    ask:['对方哪个子一直没动过？会不会是地雷或军旗？','你的军旗附近，有没有留下足够的守卫？','先用小子去试探，还是直接派大官冲？','对方的炸弹可能藏在哪？你的司令安全吗？']}
+};
+var LV_DESC = ['会走就能赢，电脑偶尔犯错','电脑会抓你的明显漏洞','俱乐部水平，需要算两三步','电脑全力计算，敢来挑战吗'];
+
+/* ---------- 存储 ---------- */
+function load(){try{return JSON.parse(localStorage.getItem('tz-hall')||'{}')}catch(e){return {}}}
+function save(d){try{localStorage.setItem('tz-hall',JSON.stringify(d))}catch(e){}}
+var DB = load(); DB.rec = DB.rec || {}; DB.seen = DB.seen || {};
+function rec(id){return DB.rec[id] = DB.rec[id] || {games:0,wins:[0,0,0,0],last:1}}
+
+/* ---------- 声音 ---------- */
+var muted = localStorage.getItem('tz-hall-mute') === '1', ac = null;
+function tone(f,d,type,vol,when){
+  if(!ac) return; var t=ac.currentTime+(when||0), o=ac.createOscillator(), g=ac.createGain();
+  o.type=type||'sine'; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol||.15,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+d);
+}
+function sound(n){
+  if(muted) return;
+  try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch(e){return}
+  if(n==='move'){tone(520,.08,'triangle',.18);tone(330,.1,'sine',.12,.02)}
+  else if(n==='capture'){tone(220,.12,'square',.08);tone(160,.16,'triangle',.18,.03)}
+  else if(n==='check'){tone(880,.12,'sawtooth',.06);tone(660,.18,'sawtooth',.06,.12)}
+  else if(n==='select'){tone(760,.05,'sine',.08)}
+  else if(n==='illegal'){tone(180,.1,'sine',.08)}
+  else if(n==='win'){[523,659,784,1046].forEach(function(f,i){tone(f,.25,'triangle',.16,i*.11)})}
+  else if(n==='lose'){[392,330,262].forEach(function(f,i){tone(f,.3,'sine',.12,i*.16)})}
+}
+function setMuteIcons(){document.querySelectorAll('[data-act=mute]').forEach(function(b){b.textContent=muted?'🔇':'🔊'})}
+
+/* ---------- 大厅 ---------- */
+function renderStats(){
+  var g=0,w=0,best=-1;
+  ORDER.forEach(function(id){var r=DB.rec[id];if(!r)return;g+=r.games;r.wins.forEach(function(x,i){w+=x;if(x>0&&i>best)best=i})});
+  $('[data-stat=games]').textContent=g; $('[data-stat=wins]').textContent=w;
+  $('[data-stat=best]').textContent=best<0?'—':'胜'+['新手','入门','进阶','大师'][best];
+}
+function renderTables(){
+  var box=$('.tables'); box.innerHTML='';
+  ORDER.forEach(function(id){
+    var g=G[id], m=META[id], r=DB.rec[id];
+    var b=document.createElement('button'); b.className='tcard'+(g?'':' off');
+    b.innerHTML='<div class="art" style="background:'+m.bg+'">'+m.svg+'</div>'+
+      (r&&r.games?'<span class="rec">'+r.games+' 局</span>':'')+
+      '<h4>'+(g?g.name:id)+'</h4><p>'+(g&&g.tagline||m.tag)+'</p><span class="play-tag" style="color:'+m.color+'">'+(g?'开一局 ›':'准备中')+'</span>';
+    b.onclick=function(){sound('select');openSetup(id)};
+    box.appendChild(b);
+  });
+}
+
+/* ---------- 设置 ---------- */
+var backFromDemo=null;
+var cur={id:null,level:1,side:0}, ctrl=null, demoCtl=null, hintStep=0;
+function openSetup(id){
+  var g=G[id], m=META[id], r=rec(id);
+  cur.id=id; cur.level=r.last; cur.side=0;
+  $('.setup-title').textContent=g.name;
+  var art=$('.setup-art'); art.style.background=m.bg; art.innerHTML=m.svg;
+  var lv=$('.levels'); lv.innerHTML='';
+  g.levels.forEach(function(name,i){
+    var b=document.createElement('button'); b.className='lv'; b.setAttribute('aria-pressed',i===cur.level);
+    b.innerHTML='<b>'+name+' <span class="stars">'+'★'.repeat(i+1)+'</span>'+(r.wins[i]?'<span class="won">赢过 '+r.wins[i]+' 次</span>':'')+'</b><small>'+LV_DESC[i]+'</small>';
+    b.onclick=function(){cur.level=i;sound('select');lv.querySelectorAll('.lv').forEach(function(x,j){x.setAttribute('aria-pressed',j===i)})};
+    lv.appendChild(b);
+  });
+  var sd=$('.sides'); sd.innerHTML='';
+  g.sides.forEach(function(name,i){
+    var b=document.createElement('button'); b.className='sd'; b.setAttribute('aria-pressed',i===0);
+    b.innerHTML=name+'<small>'+(i===0?'先手':'后手 · 电脑先走')+'</small>';
+    b.onclick=function(){cur.side=i;sound('select');sd.querySelectorAll('.sd').forEach(function(x,j){x.setAttribute('aria-pressed',j===i)})};
+    sd.appendChild(b);
+  });
+  $('.want-demo').checked=!DB.seen[id];
+  show('setup');
+}
+
+function show(v){
+  app.dataset.view=v;
+  document.querySelectorAll('.view').forEach(function(s){s.setAttribute('aria-hidden',!s.classList.contains(v))});
+  window.scrollTo(0,0);
+}
+
+/* ---------- 演示 ---------- */
+function startDemo(thenPlay,fromPlay){
+  var g=G[cur.id]; if(demoCtl){try{demoCtl.stop()}catch(e){} demoCtl=null} if(!fromPlay) stopAll();
+  $('.demo-title').textContent=g.name+' · 规则演示';
+  var el=$('.demo-board'); el.innerHTML='';
+  var dots=$('.dots'); dots.innerHTML=''; var step=0;
+  $('.cap-txt').textContent='准备…'; $('.cap-step').textContent='1';
+  show('demo');
+  var finish=function(){DB.seen[cur.id]=1;save(DB); if(demoCtl){demoCtl.stop();demoCtl=null} if(thenPlay) startPlay(); else show(fromPlay?'play':'setup')};
+  $('.skip').onclick=finish;
+  $('.skip').textContent=thenPlay?'跳过，开始下 ›':fromPlay?'回到对局 ›':'结束演示 ›';
+  backFromDemo=finish;
+  try{
+    demoCtl=g.demo(el,{
+      onCaption:function(t){step++; var p=$('.cap-txt'); p.textContent=t; p.style.animation='none'; void p.offsetWidth; p.style.animation='';
+        $('.cap-step').textContent=step; var i=document.createElement('i'); dots.appendChild(i); dots.querySelectorAll('i').forEach(function(x,j){x.className=j===step-1?'on':''}); sound('select')},
+      onDone:function(){$('.cap-txt').textContent=thenPlay?'记住了吗？马上开局！':'演示结束，可以开局了。'; $('.skip').textContent=thenPlay?'开始下 ›':fromPlay?'回到对局 ›':'返回 ›'; setTimeout(function(){if(app.dataset.view==='demo'&&thenPlay)finish()},1800)}
+    });
+  }catch(e){console.error(e); finish();}
+}
+
+/* ---------- 对局 ---------- */
+function setStatus(t){
+  var s=$('.status'); s.querySelector('span').textContent=t;
+  s.classList.toggle('think',/思考/.test(t)); s.classList.toggle('alert',/将军|将！|check|小心|危险/.test(t));
+}
+function startPlay(){
+  var g=G[cur.id]; stopAll(); hideCoach(); hintStep=0;
+  var r=rec(cur.id); r.last=cur.level; save(DB);
+  $('.play-title b').textContent=g.name;
+  $('.play-title small').textContent=g.levels[cur.level]+' · 你执'+g.sides[cur.side];
+  var el=$('.play-board'); el.innerHTML='';
+  show('play'); setStatus('准备中…');
+  try{
+    ctrl=g.mount(el,{level:cur.level,side:cur.side,sound:function(n){sound(n); if(n==='move'||n==='capture'){hintStep=0;hideCoach()}},onStatus:setStatus,onEnd:onEnd});
+  }catch(e){console.error(e); setStatus('这张棋桌出了点问题，换一张试试');}
+}
+function onEnd(res){
+  var r=rec(cur.id); r.games++;
+  var win=res.winner==='player', draw=res.winner==='draw';
+  if(win) r.wins[cur.level]++;
+  save(DB);
+  setTimeout(function(){
+    $('.m-emoji').textContent=win?'🏆':draw?'🤝':'🥟';
+    $('.m-title').textContent=win?'你赢了！':draw?'和棋':'这局电脑赢了';
+    $('.m-reason').textContent=(res.reason||'')+(win?'':draw?'':' · 别灰心，按「提示」让教练问你几个问题');
+    var up=$('.m-up'); up.hidden=!(win&&cur.level<3);
+    up.textContent='挑战「'+G[cur.id].levels[Math.min(3,cur.level+1)]+'」';
+    $('.modal').hidden=false; sound(win?'win':draw?'move':'lose'); if(win) confetti();
+  },700);
+}
+function stopAll(){
+  if(ctrl&&ctrl.destroy){try{ctrl.destroy()}catch(e){}} ctrl=null;
+  if(demoCtl){try{demoCtl.stop()}catch(e){}} demoCtl=null;
+}
+function hideCoach(){$('.coach-bubble').hidden=true}
+function coachSay(t){var b=$('.coach-bubble'); b.querySelector('p').textContent=t; b.hidden=false}
+function hint(){
+  if(!ctrl) return;
+  var qs=META[cur.id].ask;
+  if(hintStep===0){ coachSay('先想一想：'+qs[Math.floor(Math.random()*qs.length)]+'（想好了再按一次「提示」看推荐）'); hintStep=1; sound('select'); }
+  else { coachSay('看棋盘上亮起来的那步。想想它为什么好？'); try{ctrl.hint()}catch(e){} hintStep=0; }
+}
+function toast(t){var x=$('.toast');x.textContent=t;x.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){x.hidden=true},1800)}
+
+/* ---------- 撒花 ---------- */
+function confetti(){
+  var c=$('.confetti'), ctx=c.getContext('2d'), dpr=window.devicePixelRatio||1;
+  c.width=innerWidth*dpr; c.height=innerHeight*dpr; ctx.scale(dpr,dpr);
+  var cols=['#e5484d','#ffc53d','#22a06b','#3b82f6','#8b5cf6','#ff8a3d'], P=[];
+  for(var i=0;i<140;i++)P.push({x:innerWidth/2,y:innerHeight*.35,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,r:Math.random()*6+4,c:cols[i%6],a:Math.random()*6,s:(Math.random()-.5)*.3});
+  var t0=performance.now();
+  (function f(t){ctx.clearRect(0,0,innerWidth,innerHeight);
+    P.forEach(function(p){p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.s;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.fillStyle=p.c;ctx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);ctx.restore()});
+    if(t-t0<2600)requestAnimationFrame(f);else ctx.clearRect(0,0,innerWidth,innerHeight)})(t0);
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]'); if(!b) return;
+  var a=b.dataset.act;
+  if(a==='mute'){muted=!muted;localStorage.setItem('tz-hall-mute',muted?'1':'0');setMuteIcons();if(!muted)sound('select')}
+  else if(a==='home'){stopAll();renderTables();renderStats();show('lobby')}
+  else if(a==='back-setup'){if(backFromDemo&&app.dataset.view==='demo'&&ctrl){backFromDemo()}else{stopAll();show('setup')}}
+  else if(a==='leave'){stopAll();openSetup(cur.id)}
+  else if(a==='undo'){if(ctrl){ctrl.undo();hideCoach();hintStep=0;sound('select')}}
+  else if(a==='hint'){hint()}
+  else if(a==='restart'){if(confirm('重新开始这一局？'))startPlay()}
+  else if(a==='rules'){startDemo(false,true)}
+});
+$('.go').onclick=function(){sound('select'); if($('.want-demo').checked) startDemo(true); else startPlay()};
+$('.demo-only').onclick=function(){startDemo(false)};
+$('.m-again').onclick=function(){$('.modal').hidden=true;startPlay()};
+$('.m-up').onclick=function(){$('.modal').hidden=true;cur.level=Math.min(3,cur.level+1);startPlay();toast('升到「'+G[cur.id].levels[cur.level]+'」，加油！')};
+$('.m-home').onclick=function(){$('.modal').hidden=true;stopAll();renderTables();renderStats();show('lobby')};
+window.addEventListener('pagehide',stopAll);
+
+setMuteIcons(); renderTables(); renderStats();
+var q=location.hash.replace('#',''); if(G[q]) openSetup(q);
+})();
