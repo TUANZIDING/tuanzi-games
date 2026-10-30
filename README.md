@@ -8,7 +8,7 @@
 - 悔棋、重开、战绩记录（只存在你自己的浏览器里）
 - 纯静态网页，无依赖、无追踪，手机和电脑都能玩
 
-在线试玩：https://tuanziding.github.io/chinese-chess-learning/
+在线试玩：https://games.aiai-academy.com （备用 https://tuanzi-games.pages.dev）
 
 ## 结构
 - `index.html` 大厅 + 设置 + 演示 + 对局
