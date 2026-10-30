@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var G = window.TZGAMES || {};
-var ORDER = ['xiangqi','chess','gomoku','junqi'];
+var ORDER = ['xiangqi','chess','gomoku','junqi','sudoku','blaster'];
 var $ = function(s,r){return (r||document).querySelector(s)};
 var app = $('.app');
 
@@ -17,7 +17,13 @@ var META = {
     ask:['对方有没有已经连成三个、两头都空的「活三」？','你自己哪里离连五最近？','如果你不堵，对方下一步能不能形成两个威胁？','有没有一个点，能同时连出你的两条线？']},
   junqi:{bg:'linear-gradient(135deg,#ece4ff,#d9ccff)',color:'#8b5cf6',tag:'暗棋布阵，夺旗为王',
     svg:'<svg viewBox="0 0 100 100"><rect x="14" y="26" width="72" height="48" rx="10" fill="#e5484d" stroke="#a52a2e" stroke-width="4"/><text x="50" y="60" text-anchor="middle" font-size="26" font-weight="800" fill="#fff" font-family="PingFang SC,sans-serif">司令</text><path d="M70 10v26" stroke="#2b2340" stroke-width="4"/><path d="M70 10h20l-6 7 6 7H70z" fill="#ffc53d"/></svg>',
-    ask:['对方哪个子一直没动过？会不会是地雷或军旗？','你的军旗附近，有没有留下足够的守卫？','先用小子去试探，还是直接派大官冲？','对方的炸弹可能藏在哪？你的司令安全吗？']}
+    ask:['对方哪个子一直没动过？会不会是地雷或军旗？','你的军旗附近，有没有留下足够的守卫？','先用小子去试探，还是直接派大官冲？','对方的炸弹可能藏在哪？你的司令安全吗？']},
+  sudoku:{bg:'linear-gradient(135deg,#fff3c4,#ffe28a)',color:'#d48806',tag:'每行每列每宫 1 到 9',
+    svg:'<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="10" fill="#fff" stroke="#2b2340" stroke-width="4"/><path d="M36.7 10v80M63.3 10v80M10 36.7h80M10 63.3h80" stroke="#2b2340" stroke-width="2.5"/><g font-family="PingFang SC,sans-serif" font-weight="800" font-size="18" text-anchor="middle"><text x="23" y="30" fill="#2b2340">5</text><text x="50" y="57" fill="#3b82f6">9</text><text x="77" y="83" fill="#2b2340">1</text><text x="77" y="30" fill="#3b82f6">3</text></g></svg>',
+    ask:['哪一行、哪一列或哪一宫已经快填满了？','这个格子所在的行、列、宫里，已经出现了哪些数字？','数字 1 到 9 里，哪个在盘面上出现得最多？它还缺在哪一宫？','有没有一个数字，在某一宫里只剩一个位置能放？']},
+  blaster:{bg:'linear-gradient(135deg,#ffd6d6,#ffb3a7)',color:'#e5484d',tag:'横版闯关射击，八方向开火',
+    svg:'<svg viewBox="0 0 100 100"><ellipse cx="44" cy="58" rx="26" ry="24" fill="#fff" stroke="#2b2340" stroke-width="3"/><rect x="20" y="40" width="48" height="8" rx="4" fill="#ff8a3d"/><circle cx="38" cy="60" r="3" fill="#2b2340"/><circle cx="52" cy="60" r="3" fill="#2b2340"/><rect x="60" y="62" width="30" height="8" rx="3" fill="#3b4a6b"/><circle cx="94" cy="66" r="4" fill="#ffc53d"/></svg>',
+    ask:['敌人的子弹是平着飞还是斜着飞？趴下能不能躲？','哪种武器胶囊最适合打天上的无人机？','炮塔什么时候停火？那是你冲过去的时机吗？','关底大炮哪个部位在闪？']}
 };
 var LV_DESC = ['会走就能赢，电脑偶尔犯错','电脑会抓你的明显漏洞','俱乐部水平，需要算两三步','电脑全力计算，敢来挑战吗'];
 
@@ -82,7 +88,7 @@ function openSetup(id){
     b.onclick=function(){cur.level=i;sound('select');lv.querySelectorAll('.lv').forEach(function(x,j){x.setAttribute('aria-pressed',j===i)})};
     lv.appendChild(b);
   });
-  var sd=$('.sides'); sd.innerHTML='';
+  var sd=$('.sides'); sd.innerHTML=''; var one=g.sides.length<2; sd.hidden=one; sd.previousElementSibling.hidden=one;
   g.sides.forEach(function(name,i){
     var b=document.createElement('button'); b.className='sd'; b.setAttribute('aria-pressed',i===0);
     b.innerHTML=name+'<small>'+(i===0?'先手':'后手 · 电脑先走')+'</small>';
@@ -129,11 +135,11 @@ function startPlay(){
   var g=G[cur.id]; stopAll(); hideCoach(); hintStep=0;
   var r=rec(cur.id); r.last=cur.level; save(DB);
   $('.play-title b').textContent=g.name;
-  $('.play-title small').textContent=g.levels[cur.level]+' · 你执'+g.sides[cur.side];
+  $('.play-title small').textContent=g.levels[cur.level]+(g.sides.length>1?' · 你执'+g.sides[cur.side]:'');
   var el=$('.play-board'); el.innerHTML='';
   show('play'); setStatus('准备中…');
   try{
-    ctrl=g.mount(el,{level:cur.level,side:cur.side,sound:function(n){sound(n); if(n==='move'||n==='capture'){hintStep=0;hideCoach()}},onStatus:setStatus,onEnd:onEnd});
+    ctrl=g.mount(el,{level:cur.level,side:cur.side,sound:function(n){sound(n); if((n==='move'||n==='capture')&&cur.id!=='blaster'){hintStep=0;hideCoach()}},onStatus:setStatus,onEnd:onEnd});
   }catch(e){console.error(e); setStatus('这张棋桌出了点问题，换一张试试');}
 }
 function onEnd(res){
@@ -155,12 +161,12 @@ function stopAll(){
   if(demoCtl){try{demoCtl.stop()}catch(e){}} demoCtl=null;
 }
 function hideCoach(){$('.coach-bubble').hidden=true}
-function coachSay(t){var b=$('.coach-bubble'); b.querySelector('p').textContent=t; b.hidden=false}
+function coachSay(t){var b=$('.coach-bubble'); b.querySelector('p').textContent=t; b.hidden=false; clearTimeout(coachSay._t); if(cur&&cur.id==='blaster')coachSay._t=setTimeout(hideCoach,6000)}
 function hint(){
   if(!ctrl) return;
   var qs=META[cur.id].ask;
   if(hintStep===0){ coachSay('先想一想：'+qs[Math.floor(Math.random()*qs.length)]+'（想好了再按一次「提示」看推荐）'); hintStep=1; sound('select'); }
-  else { coachSay('看棋盘上亮起来的那步。想想它为什么好？'); try{ctrl.hint()}catch(e){} hintStep=0; }
+  else { coachSay(cur.id==='sudoku'?'看亮起来的那一格，想想为什么只能是它？':cur.id==='blaster'?'看画面上的操作提示，试试这招。':'看棋盘上亮起来的那步。想想它为什么好？'); try{ctrl.hint()}catch(e){} hintStep=0; }
 }
 function toast(t){var x=$('.toast');x.textContent=t;x.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){x.hidden=true},1800)}
 
@@ -186,7 +192,10 @@ document.addEventListener('click',function(e){
   else if(a==='leave'){stopAll();openSetup(cur.id)}
   else if(a==='undo'){if(ctrl){ctrl.undo();hideCoach();hintStep=0;sound('select')}}
   else if(a==='hint'){hint()}
-  else if(a==='restart'){if(confirm('重新开始这一局？'))startPlay()}
+  else if(a==='restart'){
+    if(b.dataset.armed==='1'){b.dataset.armed='';clearTimeout(b._t);b.innerHTML='<span>⟳</span>重开';startPlay();toast('新的一局开始了')}
+    else{b.dataset.armed='1';b.innerHTML='<span>⟳</span>再点确认';sound('select');b._t=setTimeout(function(){b.dataset.armed='';b.innerHTML='<span>⟳</span>重开'},2500)}
+  }
   else if(a==='rules'){startDemo(false,true)}
 });
 $('.go').onclick=function(){sound('select'); if($('.want-demo').checked) startDemo(true); else startPlay()};
