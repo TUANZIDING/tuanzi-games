@@ -1,6 +1,6 @@
 /* 团子棋馆 · 军棋 v1.0 */
 .junqi-wrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;-webkit-user-select:none;user-select:none}
-.junqi-board{position:relative;width:min(92vw,420px,54vh);max-width:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border-radius:var(--radius,18px);box-shadow:0 10px 24px rgba(43,35,64,.16)}
+.junqi-board{position:relative;width:var(--bwt,min(92vw,420px,54vh));max-width:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border-radius:var(--radius,18px);box-shadow:0 10px 24px rgba(43,35,64,.16)}
 .junqi-sizer{padding-top:180%}
 .junqi-svg{position:absolute;inset:0;left:0;top:0;width:100%;height:100%;display:block}
 .junqi-marks,.junqi-pieces{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
@@ -21,7 +21,7 @@
 .junqi-gone{opacity:0;transform:translate(-50%,-50%) scale(.3)}
 .junqi-toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);max-width:88%;background:rgba(43,35,64,.9);color:#fff;padding:10px 14px;border-radius:14px;font-size:15px;font-weight:700;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9;line-height:1.4}
 .junqi-toast.junqi-show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.junqi-info{width:min(92vw,420px);max-width:100%;font-size:13px;color:var(--ink,#2b2340);display:flex;flex-direction:column;gap:5px}
+.junqi-info{width:var(--bwt,min(92vw,420px));max-width:100%;font-size:13px;color:var(--ink,#2b2340);display:flex;flex-direction:column;gap:5px}
 .junqi-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
 .junqi-row b{margin-right:auto}
 .junqi-lbl{color:var(--muted,#7a6f86);margin-right:4px}

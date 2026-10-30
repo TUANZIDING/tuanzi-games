@@ -356,7 +356,7 @@
 
   /* ===================== 视图 ===================== */
   var CSS = [
-    '.gomoku-wrap{width:min(92vw,560px);margin:0 auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}',
+    '.gomoku-wrap{width:var(--bw,min(92vw,560px));margin:0 auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}',
     '.gomoku-board{position:relative;width:100%;padding-top:100%;border-radius:var(--radius,18px);',
     'background:repeating-linear-gradient(92deg,rgba(150,95,40,.07) 0 3px,rgba(255,255,255,0) 3px 11px),radial-gradient(ellipse at 30% 20%,#f8d8a0 0,#ecbb72 55%,#dca25a 100%);',
     'box-shadow:0 10px 24px rgba(120,70,20,.25),inset 0 0 0 3px rgba(255,255,255,.35),inset 0 -6px 14px rgba(120,70,20,.18);touch-action:manipulation;cursor:pointer}',

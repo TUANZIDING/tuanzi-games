@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var G = window.TZGAMES || {};
-var ORDER = ['xiangqi','chess','gomoku','junqi','sudoku','blaster'];
+var ORDER = ['xiangqi','chess','gomoku','go9','junqi','sudoku','huarong','point24','nonogram','blaster'];
 var $ = function(s,r){return (r||document).querySelector(s)};
 var app = $('.app');
 
@@ -18,6 +18,18 @@ var META = {
   junqi:{bg:'linear-gradient(135deg,#ece4ff,#d9ccff)',color:'#8b5cf6',tag:'暗棋布阵，夺旗为王',
     svg:'<svg viewBox="0 0 100 100"><rect x="14" y="26" width="72" height="48" rx="10" fill="#e5484d" stroke="#a52a2e" stroke-width="4"/><text x="50" y="60" text-anchor="middle" font-size="26" font-weight="800" fill="#fff" font-family="PingFang SC,sans-serif">司令</text><path d="M70 10v26" stroke="#2b2340" stroke-width="4"/><path d="M70 10h20l-6 7 6 7H70z" fill="#ffc53d"/></svg>',
     ask:['对方哪个子一直没动过？会不会是地雷或军旗？','你的军旗附近，有没有留下足够的守卫？','先用小子去试探，还是直接派大官冲？','对方的炸弹可能藏在哪？你的司令安全吗？']},
+  huarong:{bg:'linear-gradient(135deg,#ffe0cc,#ffc29e)',color:'#d4651f',tag:'把曹操从下面的出口救出去',
+    svg:'<svg viewBox="0 0 100 100"><rect x="18" y="8" width="64" height="84" rx="8" fill="#c98b4a"/><rect x="34" y="14" width="32" height="32" rx="6" fill="#e5484d"/><text x="50" y="36" font-size="13" font-weight="800" text-anchor="middle" fill="#fff">曹</text><rect x="22" y="14" width="10" height="32" rx="4" fill="#3b82f6"/><rect x="68" y="14" width="10" height="32" rx="4" fill="#3b82f6"/><rect x="34" y="50" width="32" height="14" rx="4" fill="#22a06b"/><rect x="22" y="68" width="10" height="10" rx="3" fill="#f3d9a4"/><rect x="68" y="68" width="10" height="10" rx="3" fill="#f3d9a4"/><path d="M42 92h16" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>',
+    ask:['曹操要出去，正下方挡着的是谁？','哪个棋子最占地方？能不能先把它挪开？','两个空格现在在哪？它们挨在一起吗？','如果先动这一块，下一步空格会跑到哪？']},
+  point24:{bg:'linear-gradient(135deg,#dbeafe,#bfdbfe)',color:'#2563eb',tag:'四张牌，加减乘除凑出 24',
+    svg:'<svg viewBox="0 0 100 100"><rect x="14" y="22" width="34" height="48" rx="6" fill="#fff" stroke="#2b2340" stroke-width="3" transform="rotate(-10 31 46)"/><rect x="52" y="22" width="34" height="48" rx="6" fill="#fff" stroke="#2b2340" stroke-width="3" transform="rotate(10 69 46)"/><text x="30" y="54" font-size="20" font-weight="800" text-anchor="middle" fill="#e5484d">8</text><text x="70" y="54" font-size="20" font-weight="800" text-anchor="middle" fill="#2b2340">3</text><text x="50" y="92" font-size="16" font-weight="800" text-anchor="middle" fill="#2563eb">=24</text></svg>',
+    ask:['24 可以拆成哪些乘法？3×8、4×6、2×12……你手里有吗？','能不能先用两张牌凑出 3、4、6 或 8？','如果加减凑不出来，试试先做除法？','有没有哪张牌可以先放一边，最后再用？']},
+  nonogram:{bg:'linear-gradient(135deg,#fce7f3,#fbcfe8)',color:'#db2777',tag:'按数字线索涂格子，涂出一幅画',
+    svg:'<svg viewBox="0 0 100 100"><rect x="24" y="24" width="64" height="64" rx="6" fill="#fff" stroke="#2b2340" stroke-width="3"/><g fill="#db2777"><rect x="40" y="40" width="12" height="12"/><rect x="56" y="40" width="12" height="12"/><rect x="40" y="56" width="28" height="12"/><rect x="52" y="72" width="4" height="0"/></g><g font-size="10" font-weight="800" fill="#2b2340" text-anchor="middle"><text x="14" y="50">1 1</text><text x="14" y="66">2</text><text x="46" y="18">2</text><text x="62" y="18">2</text></g></svg>',
+    ask:['哪一行或哪一列的数字加起来最大？它几乎占满了吗？','这个数字比格子数的一半还大吗？中间哪几格一定要涂？','哪一行已经满足了？剩下的格子是不是都该打叉？','有没有被叉隔开的小空间，放不下这个数字？']},
+  go9:{bg:'linear-gradient(135deg,#f5e6c8,#e8cf9a)',color:'#8a5a1f',tag:'9 路小棋盘，围地多者胜',
+    svg:'<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="8" fill="#e8c27c"/><path d="M22 22v56M36 22v56M50 22v56M64 22v56M78 22v56M22 22h56M22 36h56M22 50h56M22 64h56M22 78h56" stroke="#7a5420" stroke-width="1.6"/><circle cx="36" cy="36" r="7" fill="#2b2340"/><circle cx="50" cy="50" r="7" fill="#2b2340"/><circle cx="64" cy="36" r="7" fill="#fff" stroke="#999"/><circle cx="64" cy="64" r="7" fill="#fff" stroke="#999"/></svg>',
+    ask:['对方哪块棋只剩一口气了？','你自己有没有哪块棋气很紧，需要先补一手？','棋盘上哪片空地还没人占？谁先下就是谁的地？','这步下了以后，能不能连成一片更安全？']},
   sudoku:{bg:'linear-gradient(135deg,#fff3c4,#ffe28a)',color:'#d48806',tag:'每行每列每宫 1 到 9',
     svg:'<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="10" fill="#fff" stroke="#2b2340" stroke-width="4"/><path d="M36.7 10v80M63.3 10v80M10 36.7h80M10 63.3h80" stroke="#2b2340" stroke-width="2.5"/><g font-family="PingFang SC,sans-serif" font-weight="800" font-size="18" text-anchor="middle"><text x="23" y="30" fill="#2b2340">5</text><text x="50" y="57" fill="#3b82f6">9</text><text x="77" y="83" fill="#2b2340">1</text><text x="77" y="30" fill="#3b82f6">3</text></g></svg>',
     ask:['哪一行、哪一列或哪一宫已经快填满了？','这个格子所在的行、列、宫里，已经出现了哪些数字？','数字 1 到 9 里，哪个在盘面上出现得最多？它还缺在哪一宫？','有没有一个数字，在某一宫里只剩一个位置能放？']},
@@ -78,7 +90,7 @@ var backFromDemo=null;
 var cur={id:null,level:1,side:0}, ctrl=null, demoCtl=null, hintStep=0;
 function openSetup(id){
   var g=G[id], m=META[id], r=rec(id);
-  cur.id=id; cur.level=r.last; cur.side=0;
+  cur.id=id; cur.level=r.last; cur.side=0; app.dataset.game=id;
   $('.setup-title').textContent=g.name;
   var art=$('.setup-art'); art.style.background=m.bg; art.innerHTML=m.svg;
   var lv=$('.levels'); lv.innerHTML='';
@@ -132,7 +144,7 @@ function setStatus(t){
   s.classList.toggle('think',/思考/.test(t)); s.classList.toggle('alert',/将军|将！|check|小心|危险/.test(t));
 }
 function startPlay(){
-  var g=G[cur.id]; stopAll(); hideCoach(); hintStep=0;
+  var g=G[cur.id]; app.dataset.game=cur.id; stopAll(); hideCoach(); hintStep=0;
   var r=rec(cur.id); r.last=cur.level; save(DB);
   $('.play-title b').textContent=g.name;
   $('.play-title small').textContent=g.levels[cur.level]+(g.sides.length>1?' · 你执'+g.sides[cur.side]:'');

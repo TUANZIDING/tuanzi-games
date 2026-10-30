@@ -4,7 +4,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-syst
 body{background:radial-gradient(circle at 10% 0,#ffe9c9 0,transparent 40%),radial-gradient(circle at 100% 30%,#e8f4ff 0,transparent 35%),var(--bg);min-height:100vh}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 a{color:var(--orange)}
-.app{max-width:1100px;margin:0 auto;padding:0 16px calc(24px + env(safe-area-inset-bottom))}
+.app{max-width:1400px;margin:0 auto;padding:0 16px calc(24px + env(safe-area-inset-bottom))}
 .view{display:none}
 .app[data-view=lobby] .lobby,.app[data-view=setup] .setup,.app[data-view=demo] .demo,.app[data-view=play] .play{display:block;animation:vin .35s ease}
 @keyframes vin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -29,7 +29,7 @@ a{color:var(--orange)}
 .hero-img{width:100%;border-radius:20px;display:block}
 
 .sec{font-size:1.15rem;margin:30px 4px 14px}
-.tables{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
 .tcard{position:relative;text-align:left;background:#fff;border-radius:24px;padding:16px;box-shadow:0 4px 0 var(--line),0 14px 30px rgba(43,35,64,.06);transition:transform .2s,box-shadow .2s;overflow:hidden}
 .tcard:hover{transform:translateY(-4px) rotate(-.4deg)}
 .tcard:active{transform:translateY(2px)}
@@ -72,8 +72,8 @@ a{color:var(--orange)}
 .ghost{display:block;width:100%;margin-top:10px;padding:12px;border-radius:16px;background:#fff;font-weight:700;color:var(--muted);box-shadow:0 3px 0 var(--line)}
 
 /* board area */
-.board-wrap{width:min(94vw,560px);margin:0 auto;position:relative}
-.caption{max-width:560px;margin:4px auto 12px;background:#fff;border-radius:18px;padding:12px 16px;box-shadow:0 3px 0 var(--line);min-height:70px;display:flex;gap:10px;align-items:center}
+.board-wrap{width:var(--bw);margin:0 auto;position:relative}
+.caption{max-width:var(--bw);margin:4px auto 12px;background:#fff;border-radius:18px;padding:12px 16px;box-shadow:0 3px 0 var(--line);min-height:70px;display:flex;gap:10px;align-items:center}
 .cap-step{flex:none;width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;font-weight:800;display:grid;place-items:center}
 .cap-txt{margin:0;line-height:1.55;font-weight:600;animation:vin .3s ease}
 .dots{display:flex;justify-content:center;gap:6px;margin:14px 0}
@@ -83,15 +83,15 @@ a{color:var(--orange)}
 .play-title{text-align:center;line-height:1.2}
 .play-title b{display:block;font-size:1.05rem}
 .play-title small{color:var(--muted);font-size:.75rem}
-.status{max-width:560px;margin:0 auto 10px;display:flex;align-items:center;gap:10px;background:#fff;border-radius:999px;padding:9px 16px;box-shadow:0 3px 0 var(--line);font-weight:700;font-size:.92rem}
+.status{max-width:var(--bw);margin:0 auto 10px;display:flex;align-items:center;gap:10px;background:#fff;border-radius:999px;padding:9px 16px;box-shadow:0 3px 0 var(--line);font-weight:700;font-size:.92rem}
 .status i{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none}
 .status.think i{background:var(--orange);animation:pulse 1s infinite}
 .status.alert{background:#ffeceb;color:var(--red)}.status.alert i{background:var(--red)}
 @keyframes pulse{50%{transform:scale(1.6);opacity:.5}}
-.coach-bubble{max-width:560px;margin:10px auto 0;display:flex;gap:10px;align-items:flex-start;background:#fffbe8;border:2px dashed #f3d27a;border-radius:18px;padding:10px 14px;animation:vin .3s}
+.coach-bubble{max-width:var(--bw);margin:10px auto 0;display:flex;gap:10px;align-items:flex-start;background:#fffbe8;border:2px dashed #f3d27a;border-radius:18px;padding:10px 14px;animation:vin .3s}
 .coach-bubble .cf{font-size:1.4rem}.coach-bubble p{margin:0;line-height:1.6;font-size:.92rem}
 .coach-bubble[hidden]{display:none}
-.actions{max-width:560px;margin:14px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.actions{max-width:var(--bw);margin:14px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .actions button{background:#fff;border-radius:16px;padding:10px 4px;font-size:.8rem;font-weight:700;color:var(--muted);box-shadow:0 3px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:2px}
 .actions button span{font-size:1.25rem;color:var(--ink)}
 .actions button:active{transform:translateY(2px);box-shadow:none}
@@ -113,3 +113,23 @@ a{color:var(--orange)}
 
 .sides[hidden],h3[hidden]{display:none}
 .actions button[data-armed="1"]{background:#fff1e6;color:var(--orange);box-shadow:0 3px 0 #ffd2b0}
+
+/* ---------- 自适应尺寸 v1.2：手机 / iPad / 电脑 ---------- */
+:root{--vh:100vh;--bw:min(94vw,760px,calc((var(--vh) - 300px)*.9));--bwt:min(92vw,560px,calc(var(--vh)*.62));--bww:min(94vw,1200px,calc((var(--vh) - 250px)*1.78))}
+@supports (height:100dvh){:root{--vh:100dvh}}
+.app[data-game=junqi] .play-board,.app[data-game=junqi] .demo-board{width:var(--bwt)}
+.app[data-game=blaster]{--bw:var(--bww)}
+.app[data-game=sudoku]{--bw:min(94vw,640px,calc((var(--vh) - 300px)*.7))}
+@media (min-width:900px) and (orientation:landscape){
+  :root{--bw:min(calc(100vw - 440px),900px,calc((var(--vh) - 120px)*.88));--bwt:min(560px,calc((var(--vh) - 120px)/1.9))}
+  .app[data-game=sudoku]{--bw:min(calc(100vw - 440px),760px,calc((var(--vh) - 120px)*.7))}
+  .app[data-view=play] .view.play{display:grid;grid-template-columns:auto 340px;grid-template-rows:auto auto auto 1fr;column-gap:28px;justify-content:center;align-items:start}
+  .view.play .topbar{grid-column:1/-1}
+  .view.play .play-board{grid-column:1;grid-row:2/5;margin:0}
+  .view.play .status,.view.play .coach-bubble,.view.play .actions{grid-column:2;width:100%;max-width:none;margin:0 0 14px}
+  .view.play .actions{grid-template-columns:1fr 1fr}
+  .view.play .actions button{padding:14px 6px;font-size:.92rem}
+  .app[data-view=play][data-game=blaster] .view.play{grid-template-columns:var(--bww);grid-template-rows:auto}
+  .app[data-game=blaster] .view.play>*{grid-column:1;grid-row:auto}
+  .app[data-game=blaster] .view.play .actions{grid-template-columns:repeat(4,1fr)}
+}

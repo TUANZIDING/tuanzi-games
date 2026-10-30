@@ -278,7 +278,7 @@
 
   /* ===================== 视图 ===================== */
   var CSS = [
-    '.sudoku-wrap{--sdw:min(92vw,520px);width:var(--sdw);margin:0 auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}',
+    '.sudoku-wrap{--sdw:var(--bw,min(92vw,560px));width:var(--sdw);margin:0 auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}',
     '.sudoku-info{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;font-size:13px;color:var(--muted,#7a6f86)}',
     '.sudoku-chip{display:inline-flex;align-items:center;gap:5px;background:var(--card,#fff);border:1px solid var(--line,#e9dcc8);border-radius:999px;padding:3px 11px;font-variant-numeric:tabular-nums}',
     '.sudoku-chip b{color:var(--ink,#2b2340);font-weight:700}',

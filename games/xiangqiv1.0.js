@@ -480,7 +480,7 @@
 
   /* ===================== VIEW ===================== */
   var CSS = [
-    '.xq-wrap{--xqW:min(92vw,560px);display:flex;flex-direction:column;align-items:center;gap:8px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}',
+    '.xq-wrap{--xqW:var(--bw,min(92vw,560px));display:flex;flex-direction:column;align-items:center;gap:8px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}',
     '.xq-board{position:relative;width:var(--xqW);height:calc(var(--xqW) * 10 / 9);border-radius:var(--radius,18px);background:radial-gradient(120% 90% at 30% 20%,#ffe9c2 0%,#f7d59c 55%,#eec37f 100%);box-shadow:0 10px 24px rgba(120,80,30,.18),inset 0 0 0 4px #e3b46d,inset 0 0 0 6px #fbe3b8;touch-action:manipulation;overflow:hidden}',
     '.xq-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}',
     '.xq-layer{position:absolute;inset:0;pointer-events:none}',
