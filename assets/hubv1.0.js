@@ -236,4 +236,5 @@ window.addEventListener('pagehide',stopAll);
 
 setMuteIcons(); renderTables(); renderStats();
 var q=location.hash.replace('#',''); if(G[q]) openSetup(q);
+else if(/^zone-/.test(q)){var zs=document.getElementById(q); if(zs) setTimeout(function(){zs.scrollIntoView({block:'start'})},60);}
 })();
