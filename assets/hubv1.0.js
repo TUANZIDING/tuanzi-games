@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var G = window.TZGAMES || {};
-var ORDER = ['xiangqi','chess','gomoku','go9','junqi','sudoku','huarong','point24','nonogram','blaster'];
+var ORDER = ['xiangqi','chess','gomoku','go9','junqi','sudoku','huarong','point24','nonogram','english','blaster'];
 var $ = function(s,r){return (r||document).querySelector(s)};
 var app = $('.app');
 
@@ -30,6 +30,9 @@ var META = {
   go9:{bg:'linear-gradient(135deg,#f5e6c8,#e8cf9a)',color:'#8a5a1f',tag:'9 路小棋盘，围地多者胜',
     svg:'<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="8" fill="#e8c27c"/><path d="M22 22v56M36 22v56M50 22v56M64 22v56M78 22v56M22 22h56M22 36h56M22 50h56M22 64h56M22 78h56" stroke="#7a5420" stroke-width="1.6"/><circle cx="36" cy="36" r="7" fill="#2b2340"/><circle cx="50" cy="50" r="7" fill="#2b2340"/><circle cx="64" cy="36" r="7" fill="#fff" stroke="#999"/><circle cx="64" cy="64" r="7" fill="#fff" stroke="#999"/></svg>',
     ask:['对方哪块棋只剩一口气了？','你自己有没有哪块棋气很紧，需要先补一手？','棋盘上哪片空地还没人占？谁先下就是谁的地？','这步下了以后，能不能连成一片更安全？']},
+  english:{bg:'linear-gradient(135deg,#dcfce7,#bbf7d0)',color:'#16a34a',tag:'团子的英语大冒险：抓单词、拼句子、羽毛球对打',
+    svg:'<svg viewBox="0 0 100 100"><circle cx="40" cy="50" r="24" fill="#fff" stroke="#2b2340" stroke-width="3"/><circle cx="33" cy="47" r="3" fill="#2b2340"/><circle cx="47" cy="47" r="3" fill="#2b2340"/><path d="M34 57q6 5 12 0" stroke="#2b2340" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="58" y="16" width="34" height="24" rx="10" fill="#16a34a"/><text x="75" y="33" font-size="13" font-weight="800" text-anchor="middle" fill="#fff">ABC</text><path d="M70 62l14 18" stroke="#2b2340" stroke-width="4" stroke-linecap="round"/><ellipse cx="66" cy="57" rx="9" ry="7" fill="none" stroke="#2b2340" stroke-width="3"/></svg>',
+    ask:['先听一听，这个词开头是什么音？','图里的人在做什么？他会说哪句话？','句子一般谁在最前面？I、You 还是 This？','对方问你问题，你要先说 Yes 还是 No？']},
   sudoku:{bg:'linear-gradient(135deg,#fff3c4,#ffe28a)',color:'#d48806',tag:'每行每列每宫 1 到 9',
     svg:'<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="10" fill="#fff" stroke="#2b2340" stroke-width="4"/><path d="M36.7 10v80M63.3 10v80M10 36.7h80M10 63.3h80" stroke="#2b2340" stroke-width="2.5"/><g font-family="PingFang SC,sans-serif" font-weight="800" font-size="18" text-anchor="middle"><text x="23" y="30" fill="#2b2340">5</text><text x="50" y="57" fill="#3b82f6">9</text><text x="77" y="83" fill="#2b2340">1</text><text x="77" y="30" fill="#3b82f6">3</text></g></svg>',
     ask:['哪一行、哪一列或哪一宫已经快填满了？','这个格子所在的行、列、宫里，已经出现了哪些数字？','数字 1 到 9 里，哪个在盘面上出现得最多？它还缺在哪一宫？','有没有一个数字，在某一宫里只剩一个位置能放？']},
