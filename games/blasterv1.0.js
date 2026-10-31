@@ -8,7 +8,7 @@
   var W = 480, H = 270, GROUND = 230, WATER_Y = 244, WATER_TOP = 238;
   var WORLD_W = 6200, CAM_MAX = WORLD_W - W, BOSS_X = 6110;
   var STEP = 1000 / 60;
-  var GRAV = 0.25, JUMP_V = -5.2, RUN = 1.5, MAXFALL = 6;
+  var GRAV = 0.25, JUMP_V = -5.6, RUN = 1.5, MAXFALL = 6;
   var PI = Math.PI, D45 = Math.SQRT1_2;
 
   var LEVELS = [
@@ -96,9 +96,9 @@
   /* ===================== 关卡 ===================== */
   function buildStage() {
     var floors = [];
-    [[0, 880], [924, 1500], [1544, 2200], [2244, 2650]].forEach(function (a) { floors.push({ x0: a[0], x1: a[1], y: GROUND, kind: 'ground', theme: 'jungle' }); });
+    [[0, 886], [918, 1506], [1538, 2206], [2238, 2650]].forEach(function (a) { floors.push({ x0: a[0], x1: a[1], y: GROUND, kind: 'ground', theme: 'jungle' }); });
     floors.push({ x0: 2650, x1: 4150, y: WATER_Y, kind: 'water' });
-    [[4150, 4700], [4744, 5300], [5344, WORLD_W]].forEach(function (a) { floors.push({ x0: a[0], x1: a[1], y: GROUND, kind: 'ground', theme: 'base' }); });
+    [[4150, 4706], [4738, 5306], [5338, WORLD_W]].forEach(function (a) { floors.push({ x0: a[0], x1: a[1], y: GROUND, kind: 'ground', theme: 'base' }); });
     var plats = [];
     [[300, 420, 185], [500, 600, 140], [700, 840, 185], [1080, 1240, 185], [1260, 1370, 140], [1620, 1740, 185],
       [1780, 1920, 140], [1980, 2080, 185], [2380, 2520, 185]].forEach(function (a) { plats.push({ x0: a[0], x1: a[1], y: a[2], theme: 'jungle' }); });
@@ -300,11 +300,22 @@
     p.prone = p.onGround && !p.inWater && !!inp.down && !h && !inp.up;
     p.dive = p.inWater && p.onGround && !!inp.down;
     p.vx = (p.prone || p.dive) ? 0 : h * RUN * (p.inWater ? 0.7 : 1);
-    if (jp && p.onGround && !p.dive) {
-      if (inp.down && p.onThin) { p.dropT = 12; p.onGround = false; p.onThin = false; p.prone = false; }
-      else { p.vy = p.inWater ? -4.8 : JUMP_V; p.onGround = false; p.spin = true; p.prone = false; }
+    // 手感辅助：跳跃缓冲（早按一点也算）+ 土狼时间（刚走出边缘还能跳）
+    if (jp) p.jbuf = 9; else if (p.jbuf > 0) p.jbuf--;
+    if (p.onGround) p.coyote = 9; else if (p.coyote > 0) p.coyote--;
+    var canJump = (p.onGround || (p.coyote > 0 && p.vy >= 0 && !p.jumped)) && !p.dive;
+    if (p.jbuf > 0 && canJump) {
+      p.jbuf = 0;
+      if (inp.down && p.onThin && p.onGround) { p.dropT = 12; p.onGround = false; p.onThin = false; p.prone = false; }
+      else { p.vy = p.inWater ? -5.4 : JUMP_V; p.onGround = false; p.spin = true; p.prone = false; p.jumped = true; p.coyote = 0; }
     }
+    if (p.onGround) p.jumped = false;
     p.vy = Math.min(p.vy + GRAV, MAXFALL);
+    // 攀边辅助：差一点没跳上对岸时，脚在地面下 14px 以内就自动爬上去
+    for (var li = 0; li < g.floors.length; li++) {
+      var lf = g.floors[li], tx = p.x + p.vx;
+      if (lf.kind === 'ground' && p.y > lf.y + 2 && p.y <= lf.y + 14 && tx + 5 > lf.x0 && tx - 5 < lf.x1) { p.y = lf.y; p.vy = 0; break; }
+    }
     var nx = wallBlock(g, p.x, p.x + p.vx, p.y, 5);
     p.x = clamp(nx, g.cam.x + 6, BOSS_X - 8);
     var ny = p.y + p.vy, wasWater = p.inWater, wasGround = p.onGround;
