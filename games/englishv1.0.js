@@ -1174,7 +1174,7 @@
   }
 
   root.TZGAMES.english = {
-    id: 'english', name: '英语小冒险', tagline: '抓团团兽，学说英语',
+    id: 'english', name: '英语大冒险', tagline: '抓团团兽，学说英语',
     levels: ['新手', '入门', '进阶', '大师'],
     sides: ['单人'],
     mount: mount,
