@@ -75,16 +75,33 @@ function renderStats(){
   $('[data-stat=games]').textContent=g; $('[data-stat=wins]').textContent=w;
   $('[data-stat=best]').textContent=best<0?'—':'胜'+['新手','入门','进阶','大师'][best];
 }
+var ZONES = [
+  {id:'board',name:'棋类对弈',en:'BOARD GAMES',img:'assets/art/zone-boardv1.0.webp',desc:'和电脑下一盘：四档难度，开局动画讲规则，团子教练先提问再给答案。',ids:['xiangqi','chess','gomoku','go9','junqi'],color:'#e5484d'},
+  {id:'puzzles',name:'益智解谜',en:'PUZZLES',img:'assets/art/zone-puzzlesv1.0.webp',desc:'数字、方块和图画谜题，一个人安静地想，想通那一下最开心。',ids:['sudoku','huarong','point24','nonogram'],color:'#d48806'},
+  {id:'english',name:'英语大冒险',en:'ENGLISH',img:'assets/art/zone-englishv1.0.webp',desc:'跟着地图一站站走：抓单词、拼句子、羽毛球对话对打，英式发音原声朗读。',ids:['english'],color:'#16a34a'},
+  {id:'blaster',name:'闯关冒险',en:'ADVENTURE',img:'assets/art/zone-blasterv1.0.webp',desc:'团子突击队：横版跑跳射击，跳过水坑、打败关底大炮。',ids:['blaster'],color:'#3b82f6'}
+];
+function tableCard(id){
+  var g=G[id], m=META[id], r=DB.rec[id];
+  var b=document.createElement('button'); b.className='tcard'+(g?'':' off');
+  b.innerHTML='<div class="art" style="background:'+m.bg+'">'+m.svg+'</div>'+
+    (r&&r.games?'<span class="rec">'+r.games+' 局</span>':'')+
+    '<h4>'+(g?g.name:id)+'</h4><p>'+(g&&g.tagline||m.tag)+'</p><span class="play-tag" style="color:'+m.color+'">'+(g?'开一局 ›':'准备中')+'</span>';
+  b.onclick=function(){sound('select');openSetup(id)};
+  return b;
+}
 function renderTables(){
   var box=$('.tables'); box.innerHTML='';
-  ORDER.forEach(function(id){
-    var g=G[id], m=META[id], r=DB.rec[id];
-    var b=document.createElement('button'); b.className='tcard'+(g?'':' off');
-    b.innerHTML='<div class="art" style="background:'+m.bg+'">'+m.svg+'</div>'+
-      (r&&r.games?'<span class="rec">'+r.games+' 局</span>':'')+
-      '<h4>'+(g?g.name:id)+'</h4><p>'+(g&&g.tagline||m.tag)+'</p><span class="play-tag" style="color:'+m.color+'">'+(g?'开一局 ›':'准备中')+'</span>';
-    b.onclick=function(){sound('select');openSetup(id)};
-    box.appendChild(b);
+  var nav=$('.zone-nav'); if(nav) nav.innerHTML='';
+  ZONES.forEach(function(z,i){
+    var sec=document.createElement('section'); sec.className='zone'+(i%2?' flip':''); sec.id='zone-'+z.id;
+    sec.style.setProperty('--zc',z.color);
+    sec.innerHTML='<div class="zone-head"><img src="'+z.img+'" alt="'+z.name+'插画（AI 生成）" loading="lazy"><div class="zone-txt"><span class="zone-en">'+('0'+(i+1)).slice(-2)+' · '+z.en+'</span><h3>'+z.name+'</h3><p>'+z.desc+'</p><span class="zone-n">'+z.ids.length+' 款</span></div></div><div class="zone-grid"></div>';
+    var grid=sec.querySelector('.zone-grid');
+    z.ids.forEach(function(id){grid.appendChild(tableCard(id))});
+    box.appendChild(sec);
+    if(nav){var a=document.createElement('a');a.href='#zone-'+z.id;a.textContent=z.name;a.style.setProperty('--zc',z.color);
+      a.onclick=function(e){e.preventDefault();sec.scrollIntoView({behavior:'smooth',block:'start'})};nav.appendChild(a)}
   });
 }
 
