@@ -4,7 +4,7 @@
 纯浏览器运行，不装 App、不注册、不收集任何数据。电脑、iPad、iPhone 都能玩。</p>
 
 <p align="center"><a href="https://games.aiai-academy.com"><strong>▶ games.aiai-academy.com · 马上开玩</strong></a><br>
-<sub>备用 <a href="https://tuanzi-games.pages.dev">tuanzi-games.pages.dev</a> · 出品 <a href="https://aiai-academy.com">团子 AI 学院 aiai-academy.com</a></sub></p>
+<sub>备用 <a href="https://tuanzi-games.pages.dev">tuanzi-games.pages.dev</a> · 出品 <a href="https://aiai-academy.com">aiai 人工智能学院 aiai-academy.com</a></sub></p>
 
 <p align="center"><img src="assets/hall-herov2.0.webp" alt="团子和小机器人的游戏室" width="860"></p>
 
