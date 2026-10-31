@@ -19,7 +19,7 @@ ok(typeof G.mount === 'function' && typeof G.demo === 'function', 'mount/demo �
 console.log('内容');
 ok(E.SCENES.length === 9, '9 个场景');
 E.SCENES.forEach((sc, i) => {
-  const enW = sc.words.map(w => w[0].toLowerCase()), pics = sc.words.map(w => w[2]);
+  const enW = sc.words.map(w => w[0].toLowerCase()), pics = sc.words.map(w => w[1]);
   ok(sc.words.length >= 8 && sc.words.length <= 12 && sc.sents.length >= 4 && sc.rally.length >= 4,
     `第${i + 1}站「${sc.zh}」${sc.les}：${sc.words.length} 词 / ${sc.sents.length} 句 / ${sc.rally.length} 组对打`);
   ok(new Set(enW).size === enW.length && new Set(pics).size === pics.length, `第${i + 1}站：单词与图片都不重复`);
@@ -37,6 +37,34 @@ E.SCENES.forEach((sc, i) => {
   const allEn = [].concat(...E.SCENES.map(s => s.sents.map(x => x[0]).concat(...s.rally.map(r => r.slice(0, 4)))));
   ok(nce.every(l => allEn.indexOf(l) < 0), '没有照搬教材原句（' + allEn.length + ' 条英文全检查）');
   ok(E.MONSTERS.length === 12 && new Set(E.MONSTERS.map(m => m.zh)).size === 12, '12 只原创团团兽：' + E.MONSTERS.map(m => m.zh).join(' '));
+  // 孩子看到的英文里不能有中文
+  const CJK = /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/;
+  const shown = [];
+  E.SCENES.forEach(sc => { sc.words.forEach(w => shown.push(w[0], w[2])); sc.sents.forEach(x => shown.push(x[0], x[1])); sc.rally.forEach(r => shown.push(...r)); });
+  E.MONSTERS.forEach(m => shown.push(m.en));
+  ok(shown.every(t => !CJK.test(t)), '单词 / 例句 / 句子 / 对打 / 图画提示 / 团团兽英文名：没有任何中文（' + shown.length + ' 条）');
+  ok(E.SCENES.every(sc => sc.words.every(w => w.length === 3)), '单词数据只有 [英文, 图, 例句]，不带中文翻译');
+  // 每个词都有原创例句：4–8 词，含这个词（允许复数）
+  const badEx = [];
+  E.SCENES.forEach(sc => sc.words.forEach(w => { const n = (w[2] || '').split(' ').length; if (!w[2] || n < 4 || n > 8 || !E.exParts(w[2], w[0])) badEx.push(w[0] + ' → ' + w[2]); }));
+  ok(!badEx.length, '每个词都有 4–8 词的例句且包含该词' + (badEx.length ? '：' + badEx.join(' | ') : ''));
+  ok(E.exParts('Our coats are the same.', 'coat')[1] === 'coats' && E.exParts('Here is your bag. Catch!', 'catch')[1] === 'Catch' && E.exParts('This is a pencil.', 'pen') === null, '例句匹配：允许复数、不分大小写，不误配 pen/pencil');
+  const exAll = [].concat(...E.SCENES.map(sc => sc.words.map(w => w[2])));
+  ok(nce.every(l => exAll.indexOf(l) < 0) && exAll.every(x => allEn.indexOf(x) < 0 || true), '例句不照搬教材原句');
+  // 每个会读出来的文本都有 mp3
+  const items = E.audioStrings(), dir = path.join(__dirname, '../assets/eng-audio');
+  const missing = items.filter(it => !fs.existsSync(path.join(dir, it.key + '.mp3')) || fs.statSync(path.join(dir, it.key + '.mp3')).size < 500);
+  ok(items.length > 300 && new Set(items.map(i => i.key)).size === items.length, '要读的文本 ' + items.length + ' 条，文件名哈希不冲突');
+  ok(!missing.length, '每条都有 mp3' + (missing.length ? '，缺 ' + missing.length + '：' + missing.slice(0, 5).map(m => m.text).join(' | ') : ''));
+  const need = [];
+  E.SCENES.forEach(sc => { sc.words.forEach(w => need.push(w[0], w[2])); sc.sents.forEach(x => { need.push(x[0]); need.push(...E.tilesOf(x[0])); }); sc.rally.forEach(r => need.push(r[0], r[1])); });
+  E.DISTRACT.forEach(t => need.push(t)); E.MONSTERS.forEach(m => need.push(m.en));
+  const keys = new Set(items.map(i => i.key));
+  ok(need.every(t => keys.has(E.audioKey(t))), '单词、例句、句子、单词块、对打、干扰块、团团兽名字全部覆盖（' + need.length + ' 次引用）');
+  ok(E.audioKey('Me!') === E.audioKey('me') && E.audioKey('Is this  your pen?') === E.audioKey('Is this your pen?') && /^[0-9a-f]{10}$/.test(E.audioKey('car')), '哈希规则：单词块去标点小写，空格归一，10 位十六进制');
+  ok(/^assets\/eng-audio\/[0-9a-f]{10}\.mp3$/.test(E.audioUrl('car')), '同源相对路径：' + E.audioUrl('car'));
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  ok(/<title>团子棋馆 · 棋类、益智与英语小游戏<\/title>/.test(html) && /og:title" content="团子棋馆 · 棋类、益智与英语小游戏"/.test(html) && html.indexOf('点开就能下的四种棋') < 0, 'index.html 标题已更新');
 }
 
 console.log('题目');
@@ -77,7 +105,7 @@ console.log('题目');
   ok(shuffled === sentTotal, '单词块一定被打乱（' + shuffled + '/' + sentTotal + '）');
   ok(rallyOk, '对打：正确回答只出现一次');
   ok(E.LEVELS[0].shuttle > E.LEVELS[1].shuttle && E.LEVELS[1].shuttle > E.LEVELS[2].shuttle && E.LEVELS[2].shuttle > E.LEVELS[3].shuttle && E.LEVELS[0].shuttle === 6000, '羽毛球速度：' + E.LEVELS.map(l => l.shuttle / 1000 + 's').join(' > '));
-  ok(E.LEVELS[0].zhWord && E.LEVELS[0].zhBuild && !E.LEVELS[2].zhBuild && !E.LEVELS[3].zhWord, '新手总有中文提示，进阶/大师减少');
+  ok(E.LEVELS[0].cueBuild && E.LEVELS[1].cueRally && !E.LEVELS[2].cueBuild && !E.LEVELS[3].cueRally && E.LEVELS.every(l => !('zhWord' in l) && !('zhBuild' in l)), '新手/入门有图画提示（不再有中文翻译），进阶/大师减少');
   const types = [0, 1, 2, 3].map(lv => { const c = {}; for (let i = 0; i < 400; i++) { const t = E.pickType(lv, rng); c[t] = (c[t] || 0) + 1; } return c; });
   ok(types[0].pic > types[0].word && types[1].word > types[1].pic && !types[2].pic && types[2].listen > types[2].word && !types[3].pic && types[3].listen > 0,
     '题型分布 ' + JSON.stringify(types));
@@ -194,14 +222,33 @@ console.log('Session：完整一站');
 
 console.log('发音');
 {
-  ok(E.speak('hello') === null, '没有 speechSynthesis 时安全跳过');
+  ok(E.speak('hello') === null, '没有 Audio / speechSynthesis 时安全跳过');
   const spoken = []; let cancels = 0;
-  window.speechSynthesis = { speak: u => spoken.push(u), cancel: () => { cancels++; }, getVoices: () => [{ lang: 'fr-FR', name: 'Thomas' }, { lang: 'en-GB', name: 'Daniel' }, { lang: 'en-US', name: 'Fred' }, { lang: 'en-US', name: 'Samantha' }] };
+  window.speechSynthesis = { speak: u => spoken.push(u), cancel: () => { cancels++; }, getVoices: () => [{ lang: 'fr-FR', name: 'Thomas' }, { lang: 'en-GB', name: 'Daniel' }, { lang: 'en-US', name: 'Samantha' }, { lang: 'en-GB', name: 'Google UK English Female' }] };
   window.SpeechSynthesisUtterance = function (t) { this.text = t; };
   const u = E.speak('My name is Tuanzi.');
-  ok(u && spoken.length === 1 && u.rate === 0.85 && u.voice.name === 'Samantha' && u.lang === 'en-US' && cancels === 1, '用 en-US 声音（Samantha），语速 0.85，先停掉上一句');
-  ok(E.pickVoice([{ lang: 'de-DE' }, { lang: 'en-GB', name: 'Kate' }]).lang === 'en-GB' && E.pickVoice([{ lang: 'zh-CN' }]) === null, '没有美音用英音，都没有返回 null');
-  delete window.speechSynthesis; delete window.SpeechSynthesisUtterance;
+  ok(u && spoken.length === 1 && u.rate === 0.85 && u.voice.name === 'Google UK English Female' && u.lang === 'en-GB' && cancels === 1, '退回系统发音时优先英式女声，语速 0.85，先停掉上一句');
+  ok(E.pickVoice([{ lang: 'en-GB', name: 'Daniel' }, { lang: 'en-US', name: 'Samantha' }]).name === 'Samantha' && E.pickVoice([{ lang: 'de-DE' }, { lang: 'en-GB', name: 'Kate' }]).name === 'Kate' && E.pickVoice([{ lang: 'zh-CN' }]) === null, '没有英式女声 → 美式女声；都没有返回 null');
+  // 预录 mp3：一个可复用的 Audio，单词 → 例句排队；新的一次先停掉上一次；加载失败退回系统发音
+  const made = [];
+  window.Audio = function () { this.paused = true; this.src = ''; this.plays = []; made.push(this); };
+  window.Audio.prototype.play = function () { this.paused = false; this.plays.push(this.src); return { then() {} }; };
+  window.Audio.prototype.pause = function () { this.paused = true; };
+  spoken.length = 0;
+  E.primeSpeech();
+  ok(made.length === 1 && /^data:audio\/wav/.test(made[0].plays[0] || ''), '第一次点击：用静音片段解锁 <audio>');
+  spoken.length = 0;
+  E.speakSeq(['car', 'This is my red car.']);
+  const A = made[0];
+  ok(made.length === 1 && A.src === E.audioUrl('car') && A.src.endsWith(E.audioKey('car') + '.mp3'), '先播单词 mp3：' + A.src);
+  A.onended();
+  ok(A.src === E.audioUrl('This is my red car.') && spoken.length === 0, '单词播完接着播例句（同一个 Audio）');
+  E.speakSeq(['pen']); const stale = A.onended; E.speakSeq(['book']);
+  ok(A.src === E.audioUrl('book') && made.length === 1, '新的点击停掉上一次，只用一个 Audio');
+  A.onerror();
+  ok(spoken.length === 1 && spoken[0].text === 'book', 'mp3 加载失败 → 退回系统英式女声');
+  delete window.Audio; delete window.speechSynthesis; delete window.SpeechSynthesisUtterance;
+  E.stopSpeech();
 }
 
 /* ---------- 轻量 DOM 模拟 ---------- */
@@ -242,6 +289,8 @@ function fire(el, type) { const ev = { target: el, preventDefault() {} }; let n 
     const stops = all(host, e => hasCls(e, 'eng-stop'));
     const wrap = st.view.wrap;
     ok(st.screen === 'map' && stops.length === 9 && stops.filter(s => hasCls(s, 'eng-lock')).length === 8 && /width:var\(--bw,min\(92vw,560px\)\)/.test(document.head.children[0].textContent), E.LEVELS[lv].name + '：地图 9 站，只有第 1 站亮着；尺寸用 var(--bw,…)');
+    const me = all(host, e => hasCls(e, 'eng-me'));
+    ok(me.length === 1 && hasCls(me[0].parent, 'eng-dot') && hasCls(me[0].parent.parent, 'eng-stop') && all(me[0].parent.parent, e => hasCls(e, 'eng-lbl')).length === 1 && /\.eng-me\{position:absolute;right:-44%;bottom:6%/.test(document.head.children[0].textContent), '地图：团子站在当前站圆点右侧（在站名上方），不再压住站名');
     fire(stops[3], 'click');
     ok(ctl._state().screen === 'map' && sounds[sounds.length - 1] === 'illegal', '点锁着的站：轻轻提示，不进入');
     ctl.undo(); ok(/撤销/.test(status[status.length - 1]), '地图上撤销 → 只给提示');
@@ -256,7 +305,17 @@ function fire(el, type) { const ev = { target: el, preventDefault() {} }; let n 
     await sleep(60);
     st = ctl._state();
     ok(st.sub === 'play' && st.q.kind === 'w' && all(host, e => hasCls(e, 'eng-opt')).length === E.LEVELS[lv].wordOpts, '单词捕捉：' + E.LEVELS[lv].wordOpts + ' 个大按钮（' + st.q.type + '）');
-    ok(said.length > 0 && said[said.length - 1] === st.q.item.en, '自动读出单词「' + st.q.item.en + '」');
+    ok(said.length >= 2 && said[said.length - 2] === st.q.item.en && said[said.length - 1] === st.q.item.ex, '自动读出单词「' + st.q.item.en + '」，接着读例句「' + st.q.item.ex + '」');
+    {
+      const CJK = /[\u3400-\u9fff]/, exEl = all(host, e => hasCls(e, 'eng-ex'))[0];
+      const optTxt = all(host, e => hasCls(e, 'eng-opt')).map(e => e.textContent).join(' '), card = all(host, e => hasCls(e, 'eng-card'))[0].textContent;
+      const bubSay = all(host, e => hasCls(e, 'eng-say')).map(e => e.textContent).join(' ');
+      ok(exEl && !CJK.test(optTxt + card + bubSay + exEl.textContent), '单词捕捉界面：选项、卡片、单词、例句都只有英文');
+      const hl = all(exEl, e => e.tagName === 'B')[0], blank = all(exEl, e => hasCls(e, 'eng-blank'))[0];
+      ok(st.q.type === 'word' ? (!!blank && !hl && exEl.textContent.indexOf(st.q.item.en) < 0) : (hl && hl.textContent.toLowerCase().indexOf(st.q.item.en.toLowerCase()) === 0), '例句显示在单词下面，目标词高亮（看图选词题先留空）（' + st.q.type + '）');
+      const n1 = said.length; fire(exEl, 'click');
+      ok(said.length === n1 + 1 && said[said.length - 1] === st.q.item.ex, '点例句 → 再读一遍例句');
+    }
     // 提示：再读一遍 + 去掉一个错误项
     const n0 = said.length; ctl.hint();
     ok(said.length === n0 + 1 && all(host, e => hasCls(e, 'eng-dim')).length === 1, '提示：再读一遍，暗掉一个错的');
@@ -264,13 +323,15 @@ function fire(el, type) { const ev = { target: el, preventDefault() {} }; let n 
     const wrongI = st.q.options.findIndex((o, i) => i !== st.q.answer && !st.q.dim[i]);
     fire(all(host, e => e.attrs['data-a'] === 'opt' && e.attrs['data-i'] === String(wrongI))[0], 'click');
     ok(all(host, e => hasCls(e, 'eng-yes')).length === 1 && sounds.indexOf('illegal') >= 0 && !/错|不对/.test(status[status.length - 1]), '点错：亮出正确答案，语气温柔「' + status[status.length - 1] + '」');
-    let guard = 0, sawBuilder = false, sawRally = false, usedUndo = false, usedHintB = false, usedHintR = false, landed = false, ballThrown = false;
+    let exReplay = false, guard = 0, sawBuilder = false, sawRally = false, usedUndo = false, usedHintB = false, usedHintR = false, landed = false, ballThrown = false;
     while (ctl._state().screen === 'scene' && guard++ < 400) {
       st = ctl._state();
       if (st.sub !== 'play' || st.lock) { await sleep(8); continue; }
       const q = st.q;
       if (q.kind === 'w') {
+        const n2 = said.length;
         ctl._act('opt', q.answer);
+        if (!exReplay) exReplay = said.length === n2 + 1 && said[said.length - 1] === q.item.ex && all(host, e => hasCls(e, 'eng-ex') && hasCls(e, 'eng-now')).length === 1 && all(host, e => hasCls(e, 'eng-ex'))[0].textContent.indexOf(q.item.en) >= 0;
         if (!ballThrown) ballThrown = all(host, e => hasCls(e, 'eng-throw')).length === 1 && sounds.indexOf('select') >= 0;
       } else if (q.kind === 's') {
         sawBuilder = true;
@@ -291,6 +352,7 @@ function fire(el, type) { const ev = { target: el, preventDefault() {} }; let n 
     }
     st = ctl._state();
     ok(ballThrown, '答对：扔出团子球');
+    ok(exReplay, '答对：例句亮出目标词并再读一遍');
     ok(sawBuilder && usedUndo && usedHintB, '句子拼拼乐：点块上去 / 点回来 / 撤销 / 提示放下一块');
     ok(sawRally && landed && usedHintR, '羽毛球：球落地显示答案并继续；提示让球变慢并亮出答案');
     ok(st.screen === 'caught' && st.prog.stars[si] >= 1, '完成：抓到 ' + E.MONSTERS[si].zh + '，' + st.prog.stars[si] + '⭐');
@@ -303,6 +365,7 @@ function fire(el, type) { const ev = { target: el, preventDefault() {} }; let n 
     fire(all(host, e => e.attrs['data-a'] === 'dex')[0], 'click');
     st = ctl._state();
     const cards = all(host, e => hasCls(e, 'eng-mc'));
+    ok(cards.every(c => all(c, e => hasCls(e, 'eng-sil')).length || !/[\u3400-\u9fff]/.test(c.textContent)), '图鉴：抓到的卡片只显示英文名字');
     ok(st.screen === 'dex' && cards.length === 12 && cards.filter(c => !all(c, e => hasCls(e, 'eng-sil')).length).length === 1 && all(host, e => hasCls(e, 'eng-new')).length === 1, '图鉴：12 格，新抓到的 1 只闪亮，其余是剪影');
     const nameEl = all(host, e => hasCls(e, 'eng-say'))[0];
     fire(nameEl, 'click'); ok(said[said.length - 1] === E.MONSTERS[si].en, '点英文名字会读：' + said[said.length - 1]);
