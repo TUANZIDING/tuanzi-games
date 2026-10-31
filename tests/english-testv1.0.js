@@ -11,7 +11,7 @@ let pass = 0, fail = 0;
 function ok(cond, msg) { if (cond) { pass++; console.log('  ✓ ' + msg); } else { fail++; console.log('  ✗ ' + msg); } }
 
 console.log('注册信息');
-ok(G.id === 'english' && G.name === '英语小冒险' && G.tagline.length <= 14, 'id/name/tagline');
+ok(G.id === 'english' && G.name === '英语大冒险' && G.tagline.length <= 14, 'id/name/tagline');
 ok(G.levels.join() === '新手,入门,进阶,大师', '4 个难度');
 ok(G.sides.length === 1 && G.sides[0] === '单人', 'sides 单人');
 ok(typeof G.mount === 'function' && typeof G.demo === 'function', 'mount/demo 存在');
